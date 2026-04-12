@@ -1,0 +1,20 @@
+{
+  "name": "app-hunt",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "devvit playtest",
+    "build:webview": "npm run build --prefix webviews && powershell -Command \"Remove-Item -Path assets -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path assets -Force; Copy-Item -Path webviews/dist/* -Destination assets -Recurse -Force\"",
+    "bundle": "npm run build:webview && devvit bundle",
+    "upload": "npm run build:webview && devvit upload"
+  },
+  "dependencies": {
+    "@devvit/public-api": "^0.12.18",
+    "hono": "^4.12.12"
+  },
+  "devDependencies": {
+    "devvit": "^0.12.18",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+webviews/dist/
+webviews/node_modules/
+assets/
+.DS_Store
+*.log
+playtest_logs.txt
+!assets/.gitkeep

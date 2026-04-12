@@ -1,0 +1,20 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "app-hunt",
+  "post": {
+    "dir": "assets",
+    "entrypoints": {
+      "default": {
+        "entry": "index.html",
+        "height": "tall"
+      }
+    }
+  },
+  "blocks": {
+    "entry": "src/main.tsx"
+  },
+  "permissions": {
+    "redis": true,
+    "reddit": true
+  }
+}
