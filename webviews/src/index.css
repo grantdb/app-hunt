@@ -36,11 +36,11 @@ body {
 /* Phone Frame */
 .phone-frame {
   position: relative;
-  width: min(100vw, 400px);
+  height: min(90vh, 800px);
   aspect-ratio: 9 / 19.5;
   background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
-  border: 12px solid #333;
-  border-radius: 48px;
+  border: 8px solid #333;
+  border-radius: 40px;
   overflow: hidden;
   box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5), 
               0 30px 60px -30px rgba(0,0,0,0.6),
