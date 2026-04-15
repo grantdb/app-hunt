@@ -71,7 +71,7 @@ function App() {
   const startNewChallenge = useCallback(() => {
     const count = Math.floor(Math.random() * 3) + 2; 
     const shuffled = [...ALL_APPS].sort(() => Math.random() - 0.5);
-    const targets = shuffled.slice(0, count).map(a => a.id);
+    const targets = Array.from(new Set(shuffled.slice(0, count).map(a => a.id)));
     
     setTargetApps(targets);
     setFoundApps([]);
@@ -126,7 +126,8 @@ function App() {
           }, 1000);
         }
       }
-    } else {
+    } else if (!foundApps.includes(appId)) {
+      // Wrong Tap (only deduct if it was a wrong guess, not a repeat)
       setScore(prev => Math.max(0, prev - 50));
       setLastFeedback('WRONG');
       setTimeout(() => setLastFeedback(null), 500);
