@@ -40,7 +40,8 @@ function App() {
   const [round, setRound] = useState(1);
   const [targetApps, setTargetApps] = useState<string[]>([]);
   const [foundApps, setFoundApps] = useState<string[]>([]);
-  const [timer, setTimer] = useState(0);
+  const [timer, setTimer] = useState(0); // in deciseconds (1/10th of a second)
+  const [wrongTaps, setWrongTaps] = useState(0);
   const [lastFeedback, setLastFeedback] = useState<string | null>(null);
   const [shuffledApps, setShuffledApps] = useState<AppInfo[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -73,10 +74,12 @@ function App() {
     };
   }, []);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (deciseconds: number) => {
+    const totalSeconds = deciseconds / 10;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = Math.floor(totalSeconds % 60);
+    const deci = deciseconds % 10;
+    return `${mins}:${secs.toString().padStart(2, '0')}.${deci}`;
   };
 
   const startNewChallenge = useCallback(() => {
@@ -88,6 +91,7 @@ function App() {
     setFoundApps([]);
     setShuffledApps([...ALL_APPS].sort(() => Math.random() - 0.5));
     setTimer(0);
+    setWrongTaps(0);
     setPhase('PLAYING');
   }, []);
 
@@ -102,7 +106,7 @@ function App() {
     if (phase === 'PLAYING') {
       interval = setInterval(() => {
         setTimer(prev => prev + 1);
-      }, 1000);
+      }, 100);
     }
     return () => clearInterval(interval);
   }, [phase]);
@@ -117,9 +121,13 @@ function App() {
       setLastFeedback('CORRECT');
 
       if (newFound.length === targetApps.length) {
-        const speedBonus = Math.max(0, (30 - timer) * 10);
+        // High-stakes speed bonus: reward sub-15-second completions heavily
+        const totalSeconds = timer / 10;
+        const speedBonus = Math.max(0, Math.floor((15 - totalSeconds) * 150));
+        const perfectBonus = wrongTaps === 0 ? 300 : 0;
         const roundBonus = 500;
-        setScore(prev => prev + roundBonus + speedBonus);
+        
+        setScore(prev => prev + roundBonus + speedBonus + perfectBonus);
         
         if (round < 3) {
           setTimeout(() => {
@@ -128,7 +136,8 @@ function App() {
           }, 1000);
         } else {
           setTimeout(() => {
-            const finalScore = Math.floor(hardMode ? (score + roundBonus + speedBonus) * 1.5 : (score + roundBonus + speedBonus));
+            const currentTotal = score + roundBonus + speedBonus + perfectBonus;
+            const finalScore = Math.floor(hardMode ? currentTotal * 1.5 : currentTotal);
             setScore(finalScore);
             setPhase('RESULT');
             
@@ -139,7 +148,8 @@ function App() {
         }
       }
     } else if (!foundApps.includes(appId)) {
-      // Wrong Tap (only deduct if it was a wrong guess, not a repeat)
+      // Wrong Tap
+      setWrongTaps(prev => prev + 1);
       setScore(prev => Math.max(0, prev - 50));
       setLastFeedback('WRONG');
       setTimeout(() => setLastFeedback(null), 500);
