@@ -10,29 +10,34 @@ Devvit.addCustomPostType({
   height: 'tall',
   render: (context) => {
     const onMessage = async (msg: any) => {
+      console.log('AppHunt: Received message', msg);
+      
       if (msg.type === 'GAME_OVER') {
         const { score } = msg;
         const user = await context.reddit.getCurrentUser();
         const username = user?.username || 'Anonymous';
         
-        // Save score to Redis
+        console.log(`AppHunt: Saving score ${score} for ${username}`);
         await context.redis.zAdd('app_hunt_leaderboard', {
           member: username,
           score: score,
         });
 
-        context.ui.showToast(`High score saved: ${score}!`);
-
-        // Update webview with latest leaderboard
+        // Fetch new leaderboard immediately
         const scores = await context.redis.zRange('app_hunt_leaderboard', 0, 9, { by: 'rank', reverse: true });
+        console.log('AppHunt: Sending leaderboard update', scores);
+        
         context.ui.webView.postMessage('app-hunt-webview', {
           type: 'LEADERBOARD_UPDATE',
           data: scores
         });
+        
+        context.ui.showToast('Score saved!');
       }
 
       if (msg.type === 'GET_LEADERBOARD') {
         const scores = await context.redis.zRange('app_hunt_leaderboard', 0, 9, { by: 'rank', reverse: true });
+        console.log('AppHunt: Sending leaderboard update', scores);
         context.ui.webView.postMessage('app-hunt-webview', {
           type: 'LEADERBOARD_UPDATE',
           data: scores

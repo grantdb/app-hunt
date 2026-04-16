@@ -15,5 +15,11 @@ App Hunt is a discovery platform for the Reddit community to find, share, and di
 - **Technology**: React Webviews for high-fidelity UI.
 - **Data Persistence**: Leveraging Reddit Redis for real-time community rankings.
 
+## Legal
+
+This application is subject to the following legal agreements:
+- [Terms of Service](https://github.com/grantdb/reddit-app-legal/blob/main/app-hunt/TERMS.md)
+- [Privacy Policy](https://github.com/grantdb/reddit-app-legal/blob/main/app-hunt/PRIVACY.md)
+
 ---
 *Built for the Reddit community.*

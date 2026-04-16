@@ -45,21 +45,32 @@ function App() {
   const [shuffledApps, setShuffledApps] = useState<AppInfo[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
+  const [status, setStatus] = useState<string>('Ready');
+
   // Listen for messages from Devvit
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      console.log('Webview: Received message', event.data);
       const { type, data } = event.data;
       if (type === 'LEADERBOARD_UPDATE') {
         setLeaderboard(data || []);
+        setStatus('Ready');
       }
     };
 
     window.addEventListener('message', handleMessage);
     
-    // Initial request for leaderboard
-    window.parent.postMessage({ type: 'GET_LEADERBOARD' }, '*');
+    const fetchLeaderboard = () => {
+      window.parent.postMessage({ type: 'GET_LEADERBOARD' }, '*');
+    };
+
+    setTimeout(fetchLeaderboard, 500);
+    const interval = setInterval(fetchLeaderboard, 8000); 
     
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      clearInterval(interval);
+    };
   }, []);
 
   const formatTime = (seconds: number) => {
@@ -123,6 +134,7 @@ function App() {
             
             // Send score to Devvit
             window.parent.postMessage({ type: 'GAME_OVER', score: finalScore }, '*');
+            setStatus('Saving Score...');
           }, 1000);
         }
       }
@@ -178,7 +190,7 @@ function App() {
         <>
           <div className="challenge-banner">
             <div className="challenge-title">Challenge {round} of 3</div>
-            <div style={{ fontSize: '18px', fontWeight: 700 }}>Find:</div>
+            <div style={{ fontSize: '14px', fontWeight: 700 }}>Find:</div>
             <div className="challenge-targets">
               {targetApps.map(appId => {
                 const app = ALL_APPS.find(a => a.id === appId);
@@ -189,7 +201,7 @@ function App() {
                 );
               })}
             </div>
-            <div style={{ alignSelf: 'flex-end', fontSize: '20px', fontWeight: 800, color: '#ffcc00' }}>
+            <div style={{ alignSelf: 'flex-end', fontSize: '16px', fontWeight: 800, color: '#ffcc00' }}>
               Score: {score}
             </div>
           </div>
@@ -213,26 +225,29 @@ function App() {
 
       {phase === 'RESULT' && (
         <div className="screen">
-          <h2 style={{ fontSize: '32px' }}>Game Over!</h2>
-          <div style={{ fontSize: '64px', fontWeight: 800, margin: '20px 0', color: '#ffcc00' }}>
+          <h2 style={{ fontSize: '24px', marginBottom: '10px' }}>Hunt Complete!</h2>
+          <div style={{ fontSize: '48px', fontWeight: 800, margin: '10px 0', color: '#ffcc00' }}>
             {score}
           </div>
-          <p>Total Points Collected</p>
-          {hardMode && <p style={{ color: '#ffcc00', fontWeight: 700 }}>1.5x Hard Mode Multiplier Applied!</p>}
+          <p style={{ fontSize: '12px', opacity: 0.7, marginBottom: '20px' }}>Total Points Secured</p>
           
-          <div style={{ margin: '20px 0', width: '100%', maxHeight: '150px', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: '18px', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '5px' }}>Top Hunters</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.8 }}>
-                  <span>{i + 1}. {entry.member}</span>
-                  <span>{Math.floor(entry.score)}</span>
-                </div>
-              )) : <p style={{ fontSize: '12px', opacity: 0.5 }}>No scores yet.</p>}
+          <div className="leaderboard-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div className="leaderboard-title" style={{ margin: 0 }}>Top Hunters</div>
+                <div style={{ fontSize: '10px', opacity: 0.5 }}>{status}</div>
             </div>
+            {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
+              <div key={i} className={`leaderboard-card ${i < 3 ? `top-${i + 1}` : ''}`}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div className="rank-badge">{i + 1}</div>
+                  <span style={{ fontSize: '14px', fontWeight: 600 }}>{entry.member}</span>
+                </div>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: '#ffcc00' }}>{Math.floor(entry.score)}</span>
+              </div>
+            )) : <p style={{ fontSize: '12px', opacity: 0.5 }}>Syncing scores...</p>}
           </div>
 
-          <button className="btn" style={{ marginTop: '20px' }} onClick={() => setPhase('START')}>
+          <button className="btn" style={{ marginTop: '15px', width: '100%' }} onClick={() => setPhase('START')}>
             Play Again
           </button>
         </div>
