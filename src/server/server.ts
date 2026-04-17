@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { context, reddit, redis } from "@devvit/web/server";
-import { createServer, getServerPort } from "@devvit/web/server";
+import { once } from "node:events";
 
 export async function serverOnRequest(
   req: IncomingMessage,
@@ -40,7 +40,7 @@ export async function serverOnRequest(
         const leaderboardKey = `app_hunt_leaderboard_${context.postId}`;
         try {
             const topScores = await redis.zRange(leaderboardKey, 0, 9, { by: "rank", reverse: true });
-            const scores = topScores.map((entry: any) => ({
+            const scores = topScores.map(entry => ({
                 member: entry.member,
                 score: entry.score
             }));
@@ -81,7 +81,7 @@ function writeJSON(
   rsp: ServerResponse,
 ): void {
   const body = JSON.stringify(json);
-  const len = new TextEncoder().encode(body).length;
+  const len = Buffer.byteLength(body);
   rsp.writeHead(status, {
     "Content-Length": len,
     "Content-Type": "application/json",
@@ -90,23 +90,8 @@ function writeJSON(
 }
 
 async function readJSON(req: IncomingMessage): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const chunks: string[] = [];
-        req.on("data", (chunk: any) => chunks.push(new TextDecoder().decode(chunk)));
-        req.on("end", () => {
-            try {
-                const body = chunks.join("");
-                resolve(JSON.parse(body));
-            } catch (err) {
-                reject(err);
-            }
-        });
-        req.on("error", reject);
-    });
+    const chunks: any[] = [];
+    req.on("data", (chunk: any) => chunks.push(chunk));
+    await once(req, "end");
+    return JSON.parse(`${Buffer.concat(chunks)}`);
 }
-
-const server = createServer(serverOnRequest);
-const port: number = getServerPort();
-
-server.on("error", (err: any) => console.error(`server error; ${err.stack}`));
-server.listen(port);

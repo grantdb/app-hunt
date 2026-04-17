@@ -2,16 +2,28 @@
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "app-hunt",
   "post": {
-    "dir": "assets",
+    "dir": "webroot",
     "entrypoints": {
       "default": {
-        "entry": "index.html",
-        "height": "tall"
+        "inline": true,
+        "entry": "index.html"
       }
     }
   },
-  "blocks": {
-    "entry": "src/main.tsx"
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.js"
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Post app-hunt",
+        "description": "Create a new app hunt post",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-create"
+      }
+    ]
   },
   "permissions": {
     "redis": true,

@@ -1,84 +1,64 @@
 import { Devvit, useState } from '@devvit/public-api';
 
 Devvit.configure({
-  redditAPI: true,
-  redis: true,
+    redditAPI: true,
+    redis: true,
 });
 
 Devvit.addCustomPostType({
-  name: 'App Hunt',
-  height: 'tall',
-  render: (context) => {
-    const onMessage = async (msg: any) => {
-      console.log('AppHunt: Received message', msg);
-      
-      if (msg.type === 'GAME_OVER') {
-        const { score } = msg;
-        const user = await context.reddit.getCurrentUser();
-        const username = user?.username || 'Anonymous';
-        
-        console.log(`AppHunt: Saving score ${score} for ${username}`);
-        await context.redis.zAdd('app_hunt_leaderboard', {
-          member: username,
-          score: score,
-        });
+    name: 'app-hunt',
+    height: 'tall',
+    render: (context) => {
+        const [playing, setPlaying] = useState(false);
 
-        // Fetch new leaderboard immediately
-        const scores = await context.redis.zRange('app_hunt_leaderboard', 0, 9, { by: 'rank', reverse: true });
-        console.log('AppHunt: Sending leaderboard update', scores);
-        
-        context.ui.webView.postMessage('app-hunt-webview', {
-          type: 'LEADERBOARD_UPDATE',
-          data: scores
-        });
-        
-        context.ui.showToast('Score saved!');
-      }
+        const onMessage = async (msg: any) => {
+            if (msg.type === 'GAME_OVER') {
+                const user = await context.reddit.getCurrentUser();
+                await context.redis.zAdd('app_hunt_leaderboard', { member: user?.username || 'Anonymous', score: msg.score });
+            }
+        };
 
-      if (msg.type === 'GET_LEADERBOARD') {
-        const scores = await context.redis.zRange('app_hunt_leaderboard', 0, 9, { by: 'rank', reverse: true });
-        console.log('AppHunt: Sending leaderboard update', scores);
-        context.ui.webView.postMessage('app-hunt-webview', {
-          type: 'LEADERBOARD_UPDATE',
-          data: scores
-        });
-      }
-    };
+        if (playing) {
+            return (
+                <vstack height="100%" width="100%">
+                    <webview
+                        id="app-hunt-webview"
+                        url="index.html"
+                        height="100%"
+                        width="100%"
+                        onMessage={onMessage}
+                    />
+                </vstack>
+            );
+        }
 
-    return (
-      <vstack height="100%" width="100%" alignment="middle center">
-        <webview
-          id="app-hunt-webview"
-          url="index.html"
-          onMessage={onMessage}
-          height="100%"
-          width="100%"
-        />
-      </vstack>
-    );
-  },
+        return (
+            <vstack height="100%" width="100%" alignment="middle center" backgroundColor="#000000">
+                <text size="xxlarge" weight="bold" color="white">APP HUNT</text>
+                <spacer size="medium" />
+                <button onPress={() => setPlaying(true)}>PLAY v1.3.0</button>
+            </vstack>
+        );
+    }
 });
 
 Devvit.addMenuItem({
-  label: 'Post App Hunt Game',
-  location: 'subreddit',
-  onPress: async (_event, context) => {
-    const { reddit, ui } = context;
-    const subreddit = await reddit.getCurrentSubreddit();
-    
-    await reddit.submitPost({
-      title: 'App Hunt: Smartphone Search Challenge',
-      subredditName: subreddit.name,
-      preview: (
-        <vstack alignment="middle center" height="100%" width="100%" gap="medium">
-            <text size="xlarge" weight="bold" color="#ff4500">APP HUNT</text>
-            <text>Loading Smartphone UI...</text>
-        </vstack>
-      ),
-    });
-    
-    ui.showToast('App Hunt post created!');
-  },
+    label: 'Post app-hunt',
+    location: 'subreddit',
+    onPress: async (_event, context) => {
+        const subreddit = await context.reddit.getCurrentSubreddit();
+        await context.reddit.submitPost({
+            title: 'App Hunt: Search Challenge',
+            subredditName: subreddit.name,
+            preview: (
+                <vstack height="100%" width="100%" alignment="middle center" backgroundColor="#000000">
+                    <text size="xlarge" weight="bold" color="white">APP HUNT</text>
+                    <text color="lightgray">Initializing...</text>
+                </vstack>
+            )
+        });
+        context.ui.showToast('Post created!');
+    }
 });
 
 export default Devvit;

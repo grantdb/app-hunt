@@ -1,15 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "outDir": "dist",
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react",
     "jsxFactory": "Devvit.createElement",
-    "jsxFragmentFactory": "Devvit.Fragment"
+    "jsxFragmentFactory": "Devvit.Fragment",
+    "types": ["node"],
+    "rootDir": "src",
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*"]
 }

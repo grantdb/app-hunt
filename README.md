@@ -1,19 +1,28 @@
 # App Hunt
 
-App Hunt is a discovery platform for the Reddit community to find, share, and discuss the latest software and applications. Built using the latest Devvit Webview technology, it provides a sleek, interactive interface for exploring new digital tools.
+![Reddit](https://img.shields.io/badge/Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white)
+![Devvit](https://img.shields.io/badge/Devvit-FF4500?style=for-the-badge&logo=devvit&logoColor=white)
+![Webview](https://img.shields.io/badge/Tech-React_Webview-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Discovery](https://img.shields.io/badge/Category-App_Discovery-brightgreen?style=for-the-badge)
+![Security](https://img.shields.io/badge/Security-Validated-success?style=for-the-badge)
+
+App Hunt is a premium discovery platform integrated directly into the Reddit client, designed to help community members find, share, and discuss the latest digital tools and software. Built with high-fidelity React Webview technology, it offers a sleek, modern interface that bridges the gap between community discussion and software exploration.
 
 ## Features
 
-- **Interactive Discovery**: A modern web-based UI directly inside the Reddit client.
-- **Community Driven**: Share favorite apps and see what others are using.
-- **Categorized Search**: Filter and find software across various categories and platforms.
-- **Seamless Integration**: Fully integrated with Reddit Authentication and data storage.
+- **Interactive Discovery Engine**: A modern, responsive web-based UI tailored for high-speed software browsing.
+- **Community Curation**: Leverages Reddit's voting and discussion systems to highlight the most useful applications.
+- **Standardized Metadata**: Displays clear icons, descriptions, and categories for every featured application.
+- **Deep Integration**: Seamlessly communicates with Reddit's persistent storage for real-time ranking and discovery logs.
 
-## Technical Details
+## Configuration
 
-- **Framework**: Devvit SDK 0.12.19
-- **Technology**: React Webviews for high-fidelity UI.
-- **Data Persistence**: Leveraging Reddit Redis for real-time community rankings.
+The application is designed for immediate deployment with minimal oversight.
+
+| Setting | Requirement |
+|---------|-------------|
+| **Theme Sync** | Automatically adapts its visual style to match the user's Reddit client (Dark/Light). |
+| **Discovery Logic** | Intelligent ranking based on community engagement and software relevance. |
 
 ## Legal
 
