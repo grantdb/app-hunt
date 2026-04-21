@@ -9,6 +9,7 @@
     "bundle": "cd webviews && npm run build",
     "build": "node --experimental-strip-types ./tools/build.ts --minify",
     "watch": "node --experimental-strip-types ./tools/build.ts",
+    "publish:public": "devvit publish --public"
   },
   "dependencies": {
     "@devvit/public-api": "0.12.20",
