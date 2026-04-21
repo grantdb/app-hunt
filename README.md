@@ -15,6 +15,21 @@ App Hunt is a premium discovery platform integrated directly into the Reddit cli
 - **Standardized Metadata**: Displays clear icons, descriptions, and categories for every featured application.
 - **Deep Integration**: Seamlessly communicates with Reddit's persistent storage for real-time ranking and discovery logs.
 
+## Technical Architecture (Mission OS v0.12.20)
+
+This application has been upgraded to the latest Devvit standards:
+- **Unified Build System**: Uses a custom `esbuild` pipeline (`tools/build.ts`) for high-performance bundling and sandbox compatibility.
+- **Dependency Hardening**: Aligned on `@devvit/public-api@0.12.20`.
+- **Security Protocols**: Source-managed with Git-hardened `.gitignore` to protect sensitive environment variables.
+
+## Deployment Commands
+
+| Command | Action |
+|---------|--------|
+| `npm run dev` | Launch local playtest environment. |
+| `npm run build` | Generate production-ready bundles. |
+| `npm run publish:public` | **NEW**: Submit the app for public review and listing on the Reddit marketplace. |
+
 ## Configuration
 
 The application is designed for immediate deployment with minimal oversight.
