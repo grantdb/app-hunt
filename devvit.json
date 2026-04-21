@@ -5,25 +5,10 @@
     "dir": "webroot",
     "entrypoints": {
       "default": {
-        "inline": true,
-        "entry": "index.html"
+        "entry": "index.html",
+        "height": "tall"
       }
     }
-  },
-  "server": {
-    "dir": "dist/server",
-    "entry": "index.js"
-  },
-  "menu": {
-    "items": [
-      {
-        "label": "Post app-hunt",
-        "description": "Create a new app hunt post",
-        "location": "subreddit",
-        "forUserType": "moderator",
-        "endpoint": "/internal/menu/post-create"
-      }
-    ]
   },
   "permissions": {
     "redis": true,

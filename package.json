@@ -7,15 +7,16 @@
     "dev": "devvit playtest",
     "upload": "devvit upload",
     "bundle": "cd webviews && npm run build",
-    "build": "npx esbuild src/server/index.ts --bundle --platform=node --format=cjs --outfile=dist/server/index.js --target=es2023"
+    "build": "node --experimental-strip-types ./tools/build.ts --minify",
+    "watch": "node --experimental-strip-types ./tools/build.ts",
   },
   "dependencies": {
-    "@devvit/public-api": "0.12.19",
-    "@devvit/web": "^0.12.19"
+    "@devvit/public-api": "0.12.20",
+    "@devvit/web": "0.12.20"
   },
   "devDependencies": {
     "@types/node": "^22.19.17",
     "esbuild": "^0.28.0",
-    "typescript": "^6.0.2"
+    "typescript": "^5.8.3"
   }
 }

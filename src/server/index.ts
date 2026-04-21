@@ -1,10 +1,10 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+// Removed node:http import for sandbox safety
 import { context, reddit, redis } from "@devvit/web/server";
 import { createServer, getServerPort } from "@devvit/web/server";
 
 export async function serverOnRequest(
-  req: IncomingMessage,
-  rsp: ServerResponse,
+  req: any,
+  rsp: any,
 ): Promise<void> {
   try {
     const url = req.url;
@@ -78,7 +78,7 @@ export async function serverOnRequest(
 function writeJSON(
   status: number,
   json: any,
-  rsp: ServerResponse,
+  rsp: any,
 ): void {
   const body = JSON.stringify(json);
   const len = new TextEncoder().encode(body).length;
@@ -89,7 +89,7 @@ function writeJSON(
   rsp.end(body);
 }
 
-async function readJSON(req: IncomingMessage): Promise<any> {
+async function readJSON(req: any): Promise<any> {
     return new Promise((resolve, reject) => {
         const chunks: string[] = [];
         req.on("data", (chunk: any) => chunks.push(new TextDecoder().decode(chunk)));

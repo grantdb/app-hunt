@@ -7,3 +7,11 @@ assets/
 *.log
 playtest_logs.txt
 !assets/.gitkeep
+
+.env
+node_modules
+dist
+.devvit
+*.log
+.DS_Store
+.env

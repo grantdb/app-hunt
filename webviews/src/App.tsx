@@ -53,7 +53,7 @@ function App() {
   const [bonusTimer, setBonusTimer] = useState(200); 
   const [roundStats, setRoundStats] = useState<{ round: number; time: number; score: number | string }[]>([]);
   const [wrongTaps, setWrongTaps] = useState(0);
-  const [lastFeedback, setLastFeedback] = useState<string | null>(null);
+  const [lastFeedback, setLastFeedback] = useState<'CORRECT' | 'WRONG' | null>(null);
   const [shuffledApps, setShuffledApps] = useState<AppInfo[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [status, setStatus] = useState<string>('Ready');
@@ -78,10 +78,7 @@ function App() {
   useEffect(() => {
     fetchLeaderboard();
     const interval = setInterval(fetchLeaderboard, 8000); 
-    
-    return () => {
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const formatTime = (deciseconds: number) => {
@@ -105,7 +102,7 @@ function App() {
   }, []);
 
   const startBonusRound = useCallback(() => {
-    const count = 5; // 5 apps for bonus
+    const count = 5; 
     const shuffled = [...ALL_APPS].sort(() => Math.random() - 0.5);
     const targets = Array.from(new Set(shuffled.slice(0, count).map(a => a.id)));
     
@@ -113,7 +110,7 @@ function App() {
     setFoundApps([]);
     setShuffledApps([...ALL_APPS].sort(() => Math.random() - 0.5));
     setWrongTaps(0);
-    setBonusTimer(200); // 20s
+    setBonusTimer(200); 
   }, []);
 
   const startGame = (e: React.MouseEvent) => {
@@ -150,7 +147,6 @@ function App() {
   useEffect(() => {
      if (phase === 'PLAYING' && round === 4 && bonusTimer === 0) {
          setPhase('RESULT');
-         // Use function updater to get latest score
          setScore(prev => {
              submitScore(prev);
              return prev;
@@ -159,7 +155,7 @@ function App() {
   }, [bonusTimer, phase, round]);
 
   const submitScore = async (finalScore: number) => {
-    setStatus('Saving Score...');
+    setStatus('Saving...');
     try {
       await fetch('/api/submit-score', {
          method: 'POST',
@@ -169,7 +165,7 @@ function App() {
       fetchLeaderboard();
     } catch (e) {
       console.error(e);
-      setStatus('Save Failed');
+      setStatus('Failed');
     }
   };
 
@@ -181,6 +177,7 @@ function App() {
       setFoundApps(newFound);
       setScore(prev => prev + 100);
       setLastFeedback('CORRECT');
+      setTimeout(() => setLastFeedback(null), 800);
 
       if (newFound.length === targetApps.length) {
         if (round === 4) {
@@ -190,10 +187,11 @@ function App() {
             setRoundStats(prev => [...prev, { round: 4, time: (200 - bonusTimer) / 10, score: `BONUS +${bonusTotal}` }]);
             
             setTimeout(() => {
-                const finalScore = score + 100 + bonusTotal;
-                setScore(finalScore);
                 setPhase('RESULT');
-                submitScore(finalScore);
+                setScore(current => {
+                  submitScore(current);
+                  return current;
+                });
             }, 1000);
         } else {
             const roundBase = 500;
@@ -215,10 +213,11 @@ function App() {
               }, 1000);
             } else {
               setTimeout(() => {
-                const finalScore = score + 100 + roundTotal;
-                setScore(finalScore);
                 setPhase('RESULT');
-                submitScore(finalScore);
+                setScore(current => {
+                  submitScore(current);
+                  return current;
+                });
               }, 1000);
             }
         }
@@ -227,7 +226,7 @@ function App() {
       setWrongTaps(prev => prev + 1);
       setScore(prev => Math.max(0, prev - 50));
       setLastFeedback('WRONG');
-      setTimeout(() => setLastFeedback(null), 500);
+      setTimeout(() => setLastFeedback(null), 800);
     }
   };
 
@@ -236,50 +235,58 @@ function App() {
     return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
   }, []);
 
-  const accuracy = Math.floor((3 / (3 + Math.max(0, wrongTaps))) * 100);
+  const accuracy = Math.floor(((targetApps.length * round) / (targetApps.length * round + wrongTaps)) * 100) || 100;
 
   return (
     <div className={`phone-frame ${hardMode ? 'hard-mode' : ''}`}>
       <div className="phone-wallpaper" />
-      <div className={`dynamic-island ${lastFeedback ? 'expanded' : ''}`} />
+      
+      <div className={`dynamic-island ${lastFeedback ? 'expanded ' + lastFeedback.toLowerCase() : ''}`}>
+        {lastFeedback === 'CORRECT' && 'MATCHED +100'}
+        {lastFeedback === 'WRONG' && 'MISS -50'}
+      </div>
 
       <div className="status-bar">
         <span>{currentTime}</span>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {round === 4 ? (
-             <span style={{ color: bonusTimer <= 50 ? '#ff3b30' : '#ffcc00', fontWeight: 'bold' }}>
+             <span style={{ color: bonusTimer <= 50 ? 'var(--error)' : 'var(--accent)', fontWeight: 'bold' }}>
                {formatTime(bonusTimer)}
              </span>
           ) : (
-             <span style={{ color: timer <= 300 ? '#34c759' : 'white' }}>
+             <span style={{ color: timer <= 300 ? 'var(--success)' : 'white' }}>
                {formatTime(timer)}
              </span>
           )}
-          <span>5G</span>
-          <div style={{ width: 20, height: 10, border: '1px solid white', borderRadius: 2, position: 'relative' }}>
-            <div style={{ position: 'absolute', inset: 1, background: '#34c759', width: '80%' }} />
+          <div style={{ width: 18, height: 9, border: '1.5px solid rgba(255,255,255,0.4)', borderRadius: 2, position: 'relative' }}>
+            <div style={{ position: 'absolute', inset: 1, background: 'var(--success)', width: '70%' }} />
           </div>
         </div>
       </div>
 
       {phase === 'START' && (
         <div className="screen start-screen">
-          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-            <h1 style={{ fontSize: '38px', margin: '0 0 10px 0', color: '#ffcc00' }}>APP HUNT</h1>
-            <p style={{ opacity: 0.8, fontSize: '14px', marginBottom: '30px' }}>Global Search Challenge</p>
-            
-            <div className="toggle-group" style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 20px', borderRadius: '15px', marginBottom: '30px' }}>
-              <span style={{ fontSize: '13px' }}>Hard Mode</span>
+          <div className="logo-container">
+            <h1 className="logo-text">APP HUNT</h1>
+            <div className="logo-sub">OS v3.0 // EXPANDED</div>
+          </div>
+          
+          <div style={{ width: '100%' }}>
+            <div className="toggle-card">
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontWeight: 700, fontSize: '14px' }}>Expert Mode</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Hide app labels for 2x focus</div>
+              </div>
               <input 
                 type="checkbox" 
                 checked={hardMode} 
                 onChange={e => setHardMode(e.target.checked)}
-                style={{ width: 20, height: 20, cursor: 'pointer' }}
+                style={{ width: 22, height: 22, accentColor: 'var(--primary)' }}
               />
             </div>
 
-            <button className="btn" style={{ padding: '20px 60px', borderRadius: '25px' }} onClick={startGame}>
-              PLAY v2.0-ST
+            <button className="btn" onClick={startGame}>
+              START MISSION
             </button>
           </div>
         </div>
@@ -287,11 +294,16 @@ function App() {
 
       {phase === 'PLAYING' && (
         <>
-          <div className={`challenge-banner ${round === 4 ? 'bonus' : ''}`} style={round === 4 ? { background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', color: '#1a1a2e', boxShadow: '0 4px 15px rgba(255, 154, 158, 0.4)' } : {}}>
-            <div className="challenge-title">
-               {round === 4 ? '🔥 BONUS ROUND 🔥' : `Challenge ${round} of 3`}
+          <div className={`challenge-banner ${round === 4 ? 'bonus' : ''}`}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="challenge-title">
+                 {round === 4 ? '🔥 BONUS WAVE 🔥' : `LEVEL ${round} / 3`}
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
+                {score}
+              </div>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700 }}>Find 5 in 20s:</div>
+            
             <div className="challenge-targets">
               {targetApps.map(appId => {
                 const app = ALL_APPS.find(a => a.id === appId);
@@ -302,16 +314,13 @@ function App() {
                 );
               })}
             </div>
-            <div style={{ alignSelf: 'flex-end', fontSize: '14px', fontWeight: 900, color: round === 4 ? '#1a1a2e' : '#ffcc00' }}>
-              Score: {score}
-            </div>
           </div>
 
           <div className="app-drawer">
             {shuffledApps.map((app) => (
               <div 
                 key={app.id} 
-                className="app-icon-container"
+                className={`app-icon-container ${lastFeedback === 'WRONG' ? 'wrong-shake' : ''} ${lastFeedback === 'CORRECT' && foundApps.includes(app.id) ? 'correct-pulse' : ''}`}
                 onClick={() => handleAppTap(app.id)}
               >
                 <div className="app-icon">
@@ -325,45 +334,44 @@ function App() {
       )}
 
       {phase === 'RESULT' && (
-        <div className="screen result-screen" style={{ padding: '15px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <div style={{ fontSize: '10px', color: '#4caf50', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '2px' }}>Mission Accomplished</div>
-            <div style={{ fontSize: '32px', fontWeight: 900, color: '#ffcc00', margin: '5px 0' }}>{score}</div>
+        <div className="screen result-screen">
+          <div className="result-header">
+            <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 800, letterSpacing: '3px' }}>MISSION COMPLETE</div>
+            <div className="score-display">{score}</div>
+            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Ranked Global #1</div>
           </div>
 
-          <div style={{ padding: '12px', marginBottom: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '6px', opacity: 0.6 }}>
-                 <span>Efficiency: {accuracy}%</span>
-                 <span>Total Time: {formatTime(timer)}</span>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-label">Accuracy</div>
+              <div className="stat-value">{accuracy}%</div>
             </div>
-            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-                 {roundStats.map(s => (
-                     <div key={s.round} style={{ background: s.round === 4 ? 'rgba(255,154,158,0.2)' : 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '10px', fontSize: '10px', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.05)', color: s.round === 4 ? '#ff9a9e' : 'white' }}>
-                         R{s.round}: {typeof s.score === 'number' ? `+${s.score}` : s.score}
-                     </div>
-                 ))}
+            <div className="stat-card">
+              <div className="stat-label">Total Time</div>
+              <div className="stat-value">{formatTime(timer)}</div>
             </div>
           </div>
 
-          <div style={{ flexGrow: 1, width: '100%', overflow: 'hidden' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, marginBottom: '8px' }}>
-                 <span style={{ color: '#ffcc00', letterSpacing: '1px' }}>GLOBAL RANKINGS</span>
-                 <span style={{ fontSize: '9px', opacity: 0.5 }}>{status}</span>
+          <div className="leaderboard-section">
+             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
+                 <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)' }}>GLOBAL RANKINGS</div>
+                 <div style={{ fontSize: '10px', color: 'var(--primary)' }}>{status.toUpperCase()}</div>
              </div>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                 {leaderboard.length > 0 ? leaderboard.slice(0, 5).map((entry, i) => (
-                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '8px 12px', background: i === 0 ? 'rgba(255,204,0,0.15)' : 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                         <span style={{ fontWeight: 600 }}>{i+1}. {entry.member}</span>
-                         <span style={{ fontWeight: 900, color: i === 0 ? '#ffcc00' : 'white' }}>{entry.score}</span>
+             <div style={{ overflowY: 'auto', paddingRight: '4px' }}>
+                 {leaderboard.length > 0 ? leaderboard.slice(0, 6).map((entry, i) => (
+                     <div key={i} className={`ranking-item ${i === 0 ? 'top' : ''}`}>
+                         <span className="rank-number">{i+1}</span>
+                         <span className="rank-name">{entry.member}</span>
+                         <span className="rank-score">{entry.score}</span>
                      </div>
                  )) : (
-                     <div style={{ textAlign: 'center', opacity: 0.3, marginTop: '20px', fontSize: '11px' }}>Syncing rankings...</div>
+                     <div style={{ textAlign: 'center', opacity: 0.3, marginTop: '40px', fontSize: '12px' }}>Updating live rankings...</div>
                  )}
              </div>
           </div>
 
-          <button className="btn" style={{ marginTop: '15px', width: '100%', borderRadius: '15px', padding: '12px', fontSize: '14px' }} onClick={startGame}>
-            PLAY AGAIN
+          <button className="btn" style={{ marginTop: '20px' }} onClick={startGame}>
+            RETRY MISSION
           </button>
         </div>
       )}
