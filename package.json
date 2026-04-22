@@ -1,6 +1,7 @@
 {
   "name": "app-hunt",
   "version": "1.0.9",
+  "description": "Discover the best hidden gems in the Android ecosystem. A community-driven app discovery experience.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,11 +13,12 @@
     "publish:public": "devvit publish --public"
   },
   "dependencies": {
-    "@devvit/public-api": "0.12.20",
-    "@devvit/web": "0.12.20"
+    "@devvit/public-api": "^0.12.20",
+    "@devvit/web": "^0.12.20"
   },
   "devDependencies": {
     "@types/node": "^22.19.17",
+    "devvit": "^0.12.20",
     "esbuild": "^0.28.0",
     "typescript": "^5.8.3"
   }
