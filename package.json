@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "devvit playtest",
     "bundle": "cd webviews && npm run build",
+    "prepublish:public": "echo \"\n[CHECKLIST] Before publishing publicly, ensure you have:\n1. Updated README.md with latest features\n2. Reviewed PRIVACY.md and TERMS.md for compliance\n3. Committed all changes to Git\n4. Verified the build passes validation\n\"",
     "upload": "npm run bundle && node ../../scripts/validate-build.js && devvit upload",
-    "publish:public": "npm run bundle && node ../../scripts/validate-build.js && devvit publish --public"
+    "publish:public": "npm run prepublish:public && npm run bundle && node ../../scripts/validate-build.js && devvit publish --public"
   },
   "dependencies": {
     "@devvit/public-api": "^0.12.20",

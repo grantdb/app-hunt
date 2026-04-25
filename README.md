@@ -10,10 +10,10 @@ App Hunt is a premium discovery platform integrated directly into the Reddit cli
 
 ## Core Features
 
-- **Interactive Discovery Engine**: A modern, responsive web-based UI tailored for high-speed software browsing.
-- **Community Curation**: Leverages Reddit's voting and discussion systems to highlight the most useful applications.
-- **Standardized Metadata**: Displays clear icons, descriptions, and categories for every featured application.
-- **Deep Integration**: Seamlessly communicates with Reddit's persistent storage for real-time ranking and discovery logs.
+- **Precision Challenge Engine**: A high-fidelity discovery game that tests your knowledge of app ecosystems with real-time feedback.
+- **Global Leaderboard**: Compete with the community for the top spot with persistent high-score tracking via Reddit Redis.
+- **Dynamic Stats**: Real-time accuracy and time tracking for every discovery mission.
+- **Expert Mode**: Toggle app labels to test your visual recognition skills in a high-stakes challenge.
 
 ## Usage & Configuration
 
