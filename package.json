@@ -6,11 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "devvit playtest",
-    "upload": "devvit upload",
     "bundle": "cd webviews && npm run build",
-    "build": "node --experimental-strip-types ./tools/build.ts --minify",
-    "watch": "node --experimental-strip-types ./tools/build.ts",
-    "publish:public": "devvit publish --public"
+    "upload": "npm run bundle && node ../../scripts/validate-build.js && devvit upload",
+    "publish:public": "npm run bundle && node ../../scripts/validate-build.js && devvit publish --public"
   },
   "dependencies": {
     "@devvit/public-api": "^0.12.20",

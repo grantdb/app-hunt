@@ -12,13 +12,44 @@ Devvit.addCustomPostType({
         console.log(`[App Hunt] Rendering post. User: ${context.userId}`);
         const [playing, setPlaying] = useState(false);
 
-        const onMessage = (msg: any) => {
-            if (msg.type === 'GAME_OVER') {
-                const handleScore = async () => {
+        const onMessage = async (msg: any) => {
+            try {
+                if (msg.type === 'GET_LEADERBOARD' || msg.type === 'SUBMIT_SCORE') {
+                    let userRank = -1;
                     const user = await context.reddit.getCurrentUser();
-                    await context.redis.zAdd('app_hunt_leaderboard', { member: user?.username || 'Anonymous', score: msg.score });
-                };
-                handleScore().catch(e => console.error('Score error:', e));
+                    const username = user?.username || 'Anonymous';
+
+                    if (msg.type === 'SUBMIT_SCORE') {
+                        await context.redis.zAdd('app_hunt_leaderboard', { member: username, score: msg.score });
+                    }
+
+                    // Fetch top scores
+                    const topScores = await context.redis.zRange('app_hunt_leaderboard', 0, 9, { by: 'rank', reverse: true });
+                    const leaderboardData = topScores.map(entry => ({
+                        member: entry.member,
+                        score: entry.score
+                    }));
+
+                    // Fetch user's rank
+                    const rank = await context.redis.zRank('app_hunt_leaderboard', username);
+                    if (rank !== undefined) {
+                        const total = await context.redis.zCard('app_hunt_leaderboard');
+                        userRank = total - rank;
+                    }
+
+                    // Send back to webview
+                    context.ui.webView.postMessage('app-hunt-webview', {
+                        type: 'LEADERBOARD_DATA',
+                        data: leaderboardData,
+                        userRank: userRank
+                    });
+                }
+            } catch (error) {
+                console.error('[App Hunt] onMessage error:', error);
+                context.ui.webView.postMessage('app-hunt-webview', {
+                    type: 'SYNC_ERROR',
+                    message: 'Failed to sync with mission control'
+                });
             }
         };
 

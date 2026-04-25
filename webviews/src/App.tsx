@@ -56,30 +56,38 @@ function App() {
   const [lastFeedback, setLastFeedback] = useState<'CORRECT' | 'WRONG' | null>(null);
   const [shuffledApps, setShuffledApps] = useState<AppInfo[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [userRank, setUserRank] = useState<number | null>(null);
   const [status, setStatus] = useState<string>('Ready');
-
-  const fetchLeaderboard = async () => {
-    setStatus('Syncing...');
-    try {
-      const res = await fetch('/api/get-leaderboard');
-      if (res.ok) {
-         const data = await res.json();
-         setLeaderboard(data.data || []);
-         setStatus('Ready');
-      } else {
-         setStatus('Sync Error');
-      }
-    } catch (e) {
-      console.error(e);
-      setStatus('Offline');
-    }
-  };
+  const [totalTaps, setTotalTaps] = useState(0);
+  const [totalTargets, setTotalTargets] = useState(0);
 
   useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const msg = event.data;
+      if (msg.type === 'LEADERBOARD_DATA') {
+        setLeaderboard(msg.data || []);
+        setUserRank(msg.userRank > 0 ? msg.userRank : null);
+        setStatus('Ready');
+      } else if (msg.type === 'SYNC_ERROR') {
+        setStatus('Sync Error');
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    
+    // Initial fetch
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 8000); 
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchLeaderboard, 10000); 
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      clearInterval(interval);
+    };
   }, []);
+
+  const fetchLeaderboard = () => {
+    setStatus('Syncing...');
+    window.parent.postMessage({ type: 'GET_LEADERBOARD' }, '*');
+  };
 
   const formatTime = (deciseconds: number) => {
     const totalSeconds = deciseconds / 10;
@@ -98,6 +106,7 @@ function App() {
     setFoundApps([]);
     setShuffledApps([...ALL_APPS].sort(() => Math.random() - 0.5));
     setWrongTaps(0);
+    setTotalTargets(prev => prev + targets.length);
     setPhase('PLAYING');
   }, []);
 
@@ -111,6 +120,7 @@ function App() {
     setShuffledApps([...ALL_APPS].sort(() => Math.random() - 0.5));
     setWrongTaps(0);
     setBonusTimer(200); 
+    setTotalTargets(prev => prev + targets.length);
   }, []);
 
   const startGame = (e: React.MouseEvent) => {
@@ -125,6 +135,8 @@ function App() {
     setTimer(0);
     setBonusTimer(200);
     setRoundStats([]);
+    setTotalTaps(0);
+    setTotalTargets(0);
     startNewChallenge();
   };
 
@@ -154,19 +166,9 @@ function App() {
      }
   }, [bonusTimer, phase, round]);
 
-  const submitScore = async (finalScore: number) => {
+  const submitScore = (finalScore: number) => {
     setStatus('Saving...');
-    try {
-      await fetch('/api/submit-score', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ score: finalScore })
-      });
-      fetchLeaderboard();
-    } catch (e) {
-      console.error(e);
-      setStatus('Failed');
-    }
+    window.parent.postMessage({ type: 'SUBMIT_SCORE', score: finalScore }, '*');
   };
 
   const handleAppTap = (appId: string) => {
@@ -176,6 +178,7 @@ function App() {
       const newFound = [...foundApps, appId];
       setFoundApps(newFound);
       setScore(prev => prev + 100);
+      setTotalTaps(prev => prev + 1);
       setLastFeedback('CORRECT');
       setTimeout(() => setLastFeedback(null), 800);
 
@@ -226,6 +229,7 @@ function App() {
       setWrongTaps(prev => prev + 1);
       setScore(prev => Math.max(0, prev - 50));
       setLastFeedback('WRONG');
+      setTotalTaps(prev => prev + 1);
       setTimeout(() => setLastFeedback(null), 800);
     }
   };
@@ -235,7 +239,15 @@ function App() {
     return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
   }, []);
 
-  const accuracy = Math.floor(((targetApps.length * round) / (targetApps.length * round + wrongTaps)) * 100) || 100;
+  const accuracy = Math.floor((totalTargets / (totalTargets + (totalTaps - foundApps.length))) * 100) || 100;
+  // Note: totalTaps includes wrong taps and correct taps. 
+  // Accuracy = totalTargets / totalTaps
+  const realAccuracy = totalTaps > 0 ? Math.floor((totalTargets / totalTaps) * 100) : 100;
+  
+  // Actually, let's use a simpler one:
+  const finalAccuracy = totalTaps > 0 ? Math.floor(((totalTaps - (totalTaps - totalTargets)) / totalTaps) * 100) : 100;
+  // Let's just track it simply:
+  const displayAccuracy = totalTaps > 0 ? Math.floor((totalTargets / totalTaps) * 100) : 100;
 
   return (
     <div className={`phone-frame ${hardMode ? 'hard-mode' : ''}`}>
@@ -338,13 +350,15 @@ function App() {
           <div className="result-header">
             <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 800, letterSpacing: '3px' }}>MISSION COMPLETE</div>
             <div className="score-display">{score}</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Ranked Global #1</div>
+            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                {userRank ? `Ranked Global #${userRank}` : 'Ranked Global #1'}
+            </div>
           </div>
 
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-label">Accuracy</div>
-              <div className="stat-value">{accuracy}%</div>
+              <div className="stat-value">{displayAccuracy}%</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">Total Time</div>
